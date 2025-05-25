@@ -1,0 +1,37 @@
+server:
+  port: 8080
+  max-http-request-header-size: 16KB
+
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/football?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 660522xD.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Descomentar si usas caché con Caffeine
+#  cache:
+#    type: caffeine
+#    cache-names: naufragos, habilidades
+#    caffeine:
+#      spec: expireAfterWrite=25m,maximumSize=100
+
+application:
+  security:
+    jwt:
+      secret-key: McvbIKwPaVjhmKBwFUdHXZvFWeAZgaJ8XJr6cBsvNkPI9VUvAWw7GzFMV6ZhSl
+      expiration: 86400000       # 1 día en milisegundos
+      refresh-token:
+        expiration: 604800000    # 7 días en milisegundos
