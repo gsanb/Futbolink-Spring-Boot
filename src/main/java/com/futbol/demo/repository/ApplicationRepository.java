@@ -13,6 +13,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByTeamId(Long teamId);
     List<Application> findByPlayerId(Long playerId);
     boolean existsByPlayerIdAndTeamId(Long playerId, Long teamId);
-    Optional<Application> findByPlayerIdAndTeamId(Long playerId, Long teamId);
+    // Cambiado para devolver solo un resultado
+    Optional<Application> findFirstByPlayerIdAndTeamId(Long playerId, Long teamId);
 
 }

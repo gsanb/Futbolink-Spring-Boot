@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -82,6 +83,18 @@ public class TeamController {
 	     return ResponseEntity.ok("Equipo creado correctamente");
 	 }
 
+	 @GetMapping("/{id}")
+	 public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
+	     Team team = teamService.getTeamById(id)
+	         .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+	     return ResponseEntity.ok(team);
+	 }
+	 
+	 @GetMapping("/test")
+	 public String test(Authentication authentication) {
+	     System.out.println("Authorities: " + authentication.getAuthorities());
+	     return "Test successful";
+	 }
 /*
 	 @PostMapping
 		public ResponseEntity<?> createTeam(@RequestBody CreateTeamDTO dto) {

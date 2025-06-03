@@ -48,7 +48,9 @@ public class SecurityConfig {
                 req
                     .requestMatchers("/auth/**", "/logos/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/teams").permitAll() // Cualquiera puede ver equipos
+                    .requestMatchers(HttpMethod.GET, "/api/teams/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/teams").hasRole("TEAM")
+                    .requestMatchers(HttpMethod.GET, "/api/applications/team").hasRole("TEAM")
                     .requestMatchers(HttpMethod.GET, "/api/applications/status/**").hasRole("PLAYER")// Solo TEAM puede crear
                     .requestMatchers("/api/teams/**").hasRole("TEAM") // Resto de operaciones requieren TEAM
                     .requestMatchers("/api/player/**").hasRole("PLAYER")

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.futbol.demo.dto.ApplicationDTO;
 import com.futbol.demo.model.Application;
 import com.futbol.demo.model.ApplicationStatus;
 import com.futbol.demo.model.Player;
@@ -54,12 +55,22 @@ public class ApplicationController {
     }
 
     @GetMapping("/team")
-    public List<Application> getTeamApplications() {
+    public List<ApplicationDTO> getTeamApplications() {
         User currentUser = userService.getCurrentUser();
         Team team = teamRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
-        return applicationRepository.findByTeamId(team.getId());
+
+        List<Application> apps = applicationRepository.findByTeamId(team.getId());
+        return apps.stream()
+                .map(app -> new ApplicationDTO(
+                        app.getId(),
+                        app.getPlayer().getUser().getName(),
+                        app.getMessage(),
+                        app.getStatus()
+                ))
+                .toList();
     }
+
 
     @PutMapping("/{id}/accept")
     public ResponseEntity<?> acceptApplication(@PathVariable Long id) {
@@ -85,7 +96,7 @@ public class ApplicationController {
         Player player = playerRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
 
-        Application app = applicationRepository.findByPlayerIdAndTeamId(player.getId(), teamId)
+        Application app = applicationRepository.findFirstByPlayerIdAndTeamId(player.getId(), teamId)
                 .orElseThrow(() -> new RuntimeException("No se encontró una postulación a este equipo"));
 
         return ResponseEntity.ok(app.getStatus());

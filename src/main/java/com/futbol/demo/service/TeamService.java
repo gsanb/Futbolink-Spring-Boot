@@ -29,7 +29,7 @@ public class TeamService {
 		teamRepository.deleteById(id);
 	}
 	
-	public Optional <Team> findById(Long id){
+	public Optional <Team> getTeamById(Long id){
 		return teamRepository.findById(id);
 	}
 	
