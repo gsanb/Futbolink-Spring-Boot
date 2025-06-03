@@ -1,26 +1,30 @@
 package com.futbol.demo.controller;
 
+import java.io.IOException;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.futbol.demo.dto.CreateTeamDTO;
+import org.springframework.web.multipart.MultipartFile;
 import com.futbol.demo.model.Team;
 import com.futbol.demo.model.User;
 import com.futbol.demo.repository.UserRepository;
 import com.futbol.demo.service.TeamService;
-import com.futbol.demo.service.UserService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 
 @RestController
 @RequestMapping("/api/teams")
@@ -37,20 +41,82 @@ public class TeamController {
 	        return ResponseEntity.ok(teamService.listTeam());
 	    }
 
-	@PostMapping
-	@PreAuthorize("hasRole('TEAM')")
-	public ResponseEntity<?> createTeam(@RequestBody CreateTeamDTO dto) {
-	    // Obtener el email del usuario autenticado
-	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	    String email = authentication.getName();
+	 @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	 public ResponseEntity<?> createTeam(
+	     @RequestParam("name") String name,
+	     @RequestParam("location") String location,
+	     @RequestParam("category") String category,
+	     @RequestParam("description") String description,
+	     @RequestParam(value = "logo", required = false) MultipartFile logoFile,
+	     Authentication authentication
+	 ) {
+	     String email = authentication.getName();
+	     System.out.println("EMAIL AUTENTICADO: " + email);
 
-	    // Buscar al usuario en la base de datos
-	    User user = userRepository.findByEmail(email)
-	        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+	     User user = userRepository.findByEmail(email)
+	         .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-	    teamService.createTeam(dto, user);
+	     String logoPath = null;
+	     if (logoFile != null && !logoFile.isEmpty()) {
+	         try {
+	             String filename = UUID.randomUUID() + "_" + logoFile.getOriginalFilename();
+	             Path path = Paths.get("logos/" + filename);
+	             Files.createDirectories(path.getParent());
+	             Files.write(path, logoFile.getBytes());
+	             logoPath = "/logos/" + filename;
+	         } catch (IOException e) {
+	             return ResponseEntity.status(500).body("Error al subir imagen");
+	         }
+	     }
 
-	    return ResponseEntity.ok("Equipo creado correctamente");
-	}
+	     Team team = Team.builder()
+	         .name(name)
+	         .location(location)
+	         .category(category)
+	         .description(description)
+	         .logoPath(logoPath)
+	         .user(user)
+	         .build();
 
+	     teamService.saveTeam(team);
+	     return ResponseEntity.ok("Equipo creado correctamente");
+	 }
+
+/*
+	 @PostMapping
+		public ResponseEntity<?> createTeam(@RequestBody CreateTeamDTO dto) {
+			System.out.println(">>> Llegó petición a /api/teams"); // Log simple
+		    // Obtener el email del usuario autenticado
+		    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		    String email = authentication.getName();
+
+		    // Buscar al usuario en la base de datos
+		    User user = userRepository.findByEmail(email)
+		        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+		    teamService.createTeam(dto, user);
+
+		    return ResponseEntity.ok("Equipo creado correctamente");
+		}
+		*/
+	 
+/*
+	@PostMapping(value = "/upload-logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<String> uploadLogo(@RequestParam("file") MultipartFile file) {
+	    try {
+	        String folder = "logos/";
+	        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+	        Path path = Paths.get(folder + filename);
+
+	        Files.createDirectories(path.getParent());
+	        Files.write(path, file.getBytes());
+
+	        // Devolver la ruta que se guardará en la BD
+	        return ResponseEntity.ok("/logos/" + filename);
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(500).body("Error al guardar la imagen");
+	    }
+	}*/
+	
 }

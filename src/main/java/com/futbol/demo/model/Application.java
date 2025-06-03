@@ -18,12 +18,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+@Entity
+@Table(name = "applications")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "applications")
 public class Application {
 
     @Id
@@ -35,11 +35,11 @@ public class Application {
     private Player player;
 
     @ManyToOne
-    @JoinColumn(name = "offer_id", referencedColumnName = "id")
-    private Offer offer;
+    @JoinColumn(name = "team_id", referencedColumnName = "id")
+    private Team team;
 
     private String message;
-    
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 

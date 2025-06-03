@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,11 +19,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.futbol.demo.model.Token;
 import com.futbol.demo.repository.TokenRepository;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,17 +39,22 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final TokenRepository tokenRepository;
-
+//requestMatchers("/api/player/profile").hasRole("PLAYER")
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req ->
-                        req.requestMatchers("/auth/**")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
-                )
+                req
+                    .requestMatchers("/auth/**", "/logos/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/teams").permitAll() // Cualquiera puede ver equipos
+                    .requestMatchers(HttpMethod.POST, "/api/teams").hasRole("TEAM")
+                    .requestMatchers(HttpMethod.GET, "/api/applications/status/**").hasRole("PLAYER")// Solo TEAM puede crear
+                    .requestMatchers("/api/teams/**").hasRole("TEAM") // Resto de operaciones requieren TEAM
+                    .requestMatchers("/api/player/**").hasRole("PLAYER")
+                    .anyRequest().authenticated()
+            )
+
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -76,5 +87,20 @@ public class SecurityConfig {
             tokenRepository.save(storedToken);
             SecurityContextHolder.clearContext();
         }
+    }
+    
+ // Configuración CORS para Spring Security
+ // En SecurityConfig.java
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+        config.setAllowCredentials(true); // Necesario para cookies/tokens
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -32,14 +33,13 @@ public class Team {
 	private String location;
 	private String category;
 	private String description;
+	private String logoPath;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
 	private User user;
 	
-	@Builder.Default
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
-    private List<Offer> offers = new ArrayList<>();
+	
 
 }
 

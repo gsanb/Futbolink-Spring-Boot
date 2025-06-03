@@ -10,6 +10,8 @@ import com.futbol.demo.model.User;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,23 +33,48 @@ public class JwtService {
                 .getSubject();
     }
 
-    public String generateToken(final User user) {
+   /* public String generateToken(final User user) {
         return buildToken(user, jwtExpiration);
+    }*/
+   /* public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole()); // ✅ Añadir rol al token
+        return buildToken(claims, user, jwtExpiration);
     }
-
+*/
+    
+    public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        // Esto debe coincidir con lo de UserDetailsService
+        claims.put("authorities", List.of("ROLE_" + user.getRole().toUpperCase()));
+        
+        return Jwts.builder()
+            .claims(claims)
+            .subject(user.getEmail())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+            .signWith(getSignInKey())
+            .compact();
+    }
     public String generateRefreshToken(final User user) {
-        return buildToken(user, refreshExpiration);
+        return buildToken(new HashMap<>(), user, refreshExpiration); // Sin claims extra
     }
 
-    private String buildToken(final User user, final long expiration) {
+    // ✅ Método sobrecargado con claims
+    private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {
         return Jwts
                 .builder()
-                .claims(Map.of("name", user.getName()))
+                .claims(extraClaims)
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey())
                 .compact();
+    }
+
+    // 🧼 Mantén este si quieres para uso interno sin claims personalizados
+    private String buildToken(User user, long expiration) {
+        return buildToken(new HashMap<>(), user, expiration);
     }
 
     public boolean isTokenValid(String token, User user) {

@@ -40,6 +40,7 @@ public class TeamService {
 	        .location(dto.getLocation())
 	        .category(dto.getCategory())
 	        .description(dto.getDescription())
+	        .logoPath(dto.getLogoPath())
 	        .user(user)
 	        .build();
 

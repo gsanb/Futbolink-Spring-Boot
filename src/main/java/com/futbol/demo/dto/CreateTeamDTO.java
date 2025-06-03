@@ -14,6 +14,9 @@ public class CreateTeamDTO {
     
     private String description;
     
+    private String logoPath;
+    
+    
    
     
     

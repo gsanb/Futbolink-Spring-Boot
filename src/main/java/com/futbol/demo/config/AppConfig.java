@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,12 +27,16 @@ public class AppConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> { 
-            final User user = repository.findByEmail(username)
+        	User user = repository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        	
+        	String rolConPrefijo = "ROLE_" + user.getRole().toUpperCase();
+        	
             return org.springframework.security.core.userdetails.User
                     .builder()
                     .username(user.getEmail())
                     .password(user.getPassword())
+                    .authorities(new SimpleGrantedAuthority(rolConPrefijo))
                     .build();
         };
     }

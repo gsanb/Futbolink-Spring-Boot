@@ -23,9 +23,11 @@ public class Player {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
+	private int age;
 	private String position;
 	private String skills;
 	private int experience;
+	private String description;
 	
 	@OneToOne
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
