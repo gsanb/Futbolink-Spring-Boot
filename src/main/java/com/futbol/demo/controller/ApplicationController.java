@@ -57,20 +57,45 @@ public class ApplicationController {
     @GetMapping("/team")
     public List<ApplicationDTO> getTeamApplications() {
         User currentUser = userService.getCurrentUser();
-        Team team = teamRepository.findByUserId(currentUser.getId())
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+        List<Team> teams = teamRepository.findByUserId(currentUser.getId());
 
-        List<Application> apps = applicationRepository.findByTeamId(team.getId());
+        if (teams.isEmpty()) {
+            throw new RuntimeException("No tienes equipos asociados");
+        }
+
+        List<Application> allApps = teams.stream()
+            .flatMap(team -> applicationRepository.findByTeamId(team.getId()).stream())
+            .toList();
+
+        return allApps.stream()
+            .map(app -> new ApplicationDTO(
+                    app.getId(),
+                    app.getPlayer().getUser().getName(),
+                    app.getMessage(),
+                    app.getStatus(),
+                    app.getTeam().getName()
+            ))
+            .toList();
+    }
+
+    @GetMapping("/player")
+    public List<ApplicationDTO> getPlayerApplications() {
+        User currentUser = userService.getCurrentUser();
+        Player player = playerRepository.findByUserId(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
+
+        List<Application> apps = applicationRepository.findByPlayerId(player.getId());
+
         return apps.stream()
                 .map(app -> new ApplicationDTO(
                         app.getId(),
-                        app.getPlayer().getUser().getName(),
+                        app.getTeam().getName(), // en este caso, devolvemos el nombre del equipo
                         app.getMessage(),
-                        app.getStatus()
+                        app.getStatus(),
+                        app.getTeam().getName()
                 ))
                 .toList();
     }
-
 
     @PutMapping("/{id}/accept")
     public ResponseEntity<?> acceptApplication(@PathVariable Long id) {

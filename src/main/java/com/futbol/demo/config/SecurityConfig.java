@@ -46,14 +46,22 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req ->
                 req
-                    .requestMatchers("/auth/**", "/logos/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/teams").permitAll() // Cualquiera puede ver equipos
-                    .requestMatchers(HttpMethod.GET, "/api/teams/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/teams").hasRole("TEAM")
-                    .requestMatchers(HttpMethod.GET, "/api/applications/team").hasRole("TEAM")
-                    .requestMatchers(HttpMethod.GET, "/api/applications/status/**").hasRole("PLAYER")// Solo TEAM puede crear
-                    .requestMatchers("/api/teams/**").hasRole("TEAM") // Resto de operaciones requieren TEAM
-                    .requestMatchers("/api/player/**").hasRole("PLAYER")
+                .requestMatchers("/auth/**", "/logos/**").permitAll()
+                
+                // Endpoints públicos
+                .requestMatchers(HttpMethod.GET, "/api/teams").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/teams/{id}").permitAll() // Permitir ver detalles sin autenticación
+                
+                // Endpoints para TEAM
+                .requestMatchers(HttpMethod.GET, "/api/teams/my-teams").hasRole("TEAM")
+                .requestMatchers(HttpMethod.POST, "/api/teams").hasRole("TEAM")
+                .requestMatchers(HttpMethod.PUT, "/api/teams/**").hasRole("TEAM")
+                .requestMatchers(HttpMethod.DELETE, "/api/teams/**").hasRole("TEAM")
+                
+                // Endpoints para aplicaciones
+                .requestMatchers(HttpMethod.GET, "/api/applications/team").hasRole("TEAM")
+                .requestMatchers(HttpMethod.GET, "/api/player/{id}").hasAnyRole("PLAYER", "TEAM")
+                .requestMatchers(HttpMethod.GET, "/api/applications/status/{teamId}").hasAnyRole("PLAYER", "TEAM")
                     .anyRequest().authenticated()
             )
 

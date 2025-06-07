@@ -46,5 +46,8 @@ public class TeamService {
 
 	    teamRepository.save(team);
 	}
-
+	
+	public List<Team> findTeamsByUser(User user) {
+	    return teamRepository.findByUser(user);
+}
 }

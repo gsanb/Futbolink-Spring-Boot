@@ -11,11 +11,14 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +43,17 @@ public class TeamController {
 	 @GetMapping
 	    public ResponseEntity<List<Team>> getAllTeams() {
 	        return ResponseEntity.ok(teamService.listTeam());
+	    }
+	 
+	 // Endpoint para equipos del usuario actual
+	    @GetMapping("/my-teams")
+	    @PreAuthorize("hasRole('TEAM')")
+	    public ResponseEntity<List<Team>> getUserTeams(Authentication authentication) {
+	        String email = authentication.getName();
+	        User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+	        
+	        return ResponseEntity.ok(teamService.findTeamsByUser(user));
 	    }
 
 	 @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -79,8 +93,8 @@ public class TeamController {
 	         .user(user)
 	         .build();
 
-	     teamService.saveTeam(team);
-	     return ResponseEntity.ok("Equipo creado correctamente");
+	     Team savedTeam = teamService.saveTeam(team);
+	     return ResponseEntity.status(201).body(savedTeam);
 	 }
 
 	 @GetMapping("/{id}")
@@ -90,46 +104,80 @@ public class TeamController {
 	     return ResponseEntity.ok(team);
 	 }
 	 
-	 @GetMapping("/test")
-	 public String test(Authentication authentication) {
-	     System.out.println("Authorities: " + authentication.getAuthorities());
-	     return "Test successful";
-	 }
-/*
-	 @PostMapping
-		public ResponseEntity<?> createTeam(@RequestBody CreateTeamDTO dto) {
-			System.out.println(">>> Llegó petición a /api/teams"); // Log simple
-		    // Obtener el email del usuario autenticado
-		    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		    String email = authentication.getName();
 
-		    // Buscar al usuario en la base de datos
-		    User user = userRepository.findByEmail(email)
-		        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+	    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	    @PreAuthorize("hasRole('TEAM')")
+	    public ResponseEntity<Team> updateTeam(
+	        @PathVariable Long id,
+	        @RequestParam(value = "name", required = false) String name,
+	        @RequestParam(value = "location", required = false) String location,
+	        @RequestParam(value = "category", required = false) String category,
+	        @RequestParam(value = "description", required = false) String description,
+	        @RequestParam(value = "logo", required = false) MultipartFile logoFile
+	    ) {
+	        Team existingTeam = teamService.getTeamById(id)
+	            .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
 
-		    teamService.createTeam(dto, user);
+	        // Actualizar solo los campos proporcionados
+	        if (name != null) existingTeam.setName(name);
+	        if (location != null) existingTeam.setLocation(location);
+	        if (category != null) existingTeam.setCategory(category);
+	        if (description != null) existingTeam.setDescription(description);
+	        
+	        if (logoFile != null && !logoFile.isEmpty()) {
+	            String newLogoPath = handleFileUpload(logoFile);
+	            // Eliminar la imagen anterior si existe
+	            if (existingTeam.getLogoPath() != null) {
+	                deleteFile(existingTeam.getLogoPath());
+	            }
+	            existingTeam.setLogoPath(newLogoPath);
+	        }
 
-		    return ResponseEntity.ok("Equipo creado correctamente");
-		}
-		*/
-	 
-/*
-	@PostMapping(value = "/upload-logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<String> uploadLogo(@RequestParam("file") MultipartFile file) {
-	    try {
-	        String folder = "logos/";
-	        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-	        Path path = Paths.get(folder + filename);
-
-	        Files.createDirectories(path.getParent());
-	        Files.write(path, file.getBytes());
-
-	        // Devolver la ruta que se guardará en la BD
-	        return ResponseEntity.ok("/logos/" + filename);
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	        return ResponseEntity.status(500).body("Error al guardar la imagen");
+	        Team updatedTeam = teamService.saveTeam(existingTeam);
+	        return ResponseEntity.ok(updatedTeam);
 	    }
-	}*/
-	
-}
+
+	    @DeleteMapping("/{id}")
+	    @PreAuthorize("hasRole('TEAM')")
+	    public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
+	        Team team = teamService.getTeamById(id)
+	            .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+	        
+	        // Eliminar la imagen del logo si existe
+	        if (team.getLogoPath() != null) {
+	            deleteFile(team.getLogoPath());
+	        }
+	        
+	        teamService.deleteTeam(id);
+	        return ResponseEntity.noContent().build();
+	    }
+
+	    // Métodos auxiliares
+	    private String handleFileUpload(MultipartFile file) {
+	        if (file == null || file.isEmpty()) {
+	            return null;
+	        }
+	        
+	        try {
+	            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+	            Path path = Paths.get("logos/" + filename);
+	            Files.createDirectories(path.getParent());
+	            Files.write(path, file.getBytes());
+	            return "/logos/" + filename;
+	        } catch (IOException e) {
+	            throw new RuntimeException("Error al subir imagen", e);
+	        }
+	    }
+
+	    private void deleteFile(String filePath) {
+	        if (filePath == null) return;
+	        
+	        try {
+	            Path path = Paths.get(filePath.substring(1)); // Elimina la '/' inicial
+	            Files.deleteIfExists(path);
+	        } catch (IOException e) {
+	            System.err.println("Error al eliminar el archivo: " + filePath);
+	        }
+	    }
+	}
+

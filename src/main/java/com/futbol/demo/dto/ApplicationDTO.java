@@ -12,4 +12,5 @@ public class ApplicationDTO {
     private String playerUsername;
     private String message;
     private ApplicationStatus status;
+    private String teamName;
 }
