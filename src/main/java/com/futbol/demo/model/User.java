@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,12 +37,27 @@ public class User {
 	  @Column(nullable = false)
 	  private String password;
 	  
-	  private String avatarPath;
-
-	  @OneToMany(mappedBy = "user")
+	  @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
 	  @JsonIgnore
 	  private List<Token> tokens;
 	
 	 @Column(nullable = false)
 	  private String role;		
+	 
+	 @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	 @JsonIgnore
+	 private List<Player> players;
+
+	 @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	 @JsonIgnore
+	 private List<Team> teams;
+	 
+	 @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	 @JsonIgnore
+	 private List<Notification> notifications;
+	 
+	
+
+
+
 }

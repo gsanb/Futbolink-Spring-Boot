@@ -4,7 +4,6 @@ package com.futbol.demo.controller;
 import com.futbol.demo.dto.PasswordChangeRequest;
 import com.futbol.demo.dto.UserUpdateRequest;
 import com.futbol.demo.model.User;
-import com.futbol.demo.model.UserResponse;
 import com.futbol.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import java.io.IOException;
@@ -65,26 +64,8 @@ public class UserController {
 
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setAvatarPath(request.getAvatarPath());
 
         userRepository.save(user);
         return ResponseEntity.ok("Perfil actualizado");
-    }
-
-    // Subir avatar
-    @PostMapping(value = "/upload-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
-        try {
-            String folder = "avatars/";
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(folder + filename);
-
-            Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
-
-            return ResponseEntity.ok("/avatars/" + filename);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error al guardar avatar");
-        }
     }
 }

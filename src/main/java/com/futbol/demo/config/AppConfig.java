@@ -23,10 +23,12 @@ import lombok.RequiredArgsConstructor;
 public class AppConfig {
 
     private final UserRepository repository;
-
+    
+    // Expone un servicio que carga los detalles del usuario desde la base de datos usando su email
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> { 
+            // Busca al usuario por su email; lanza excepción si no lo encuentra
         	User user = repository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         	
@@ -41,6 +43,7 @@ public class AppConfig {
         };
     }
 
+    // Define el proveedor de autenticación que usa los detalles del usuario y el codificador de contraseñas
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -49,11 +52,13 @@ public class AppConfig {
         return authProvider;
     }
 
+    // Expone el AuthenticationManager, necesario para procesar las solicitudes de autenticación
     @Bean
     public AuthenticationManager authenticationManager(final AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
+    
+    // Proporciona el codificador de contraseñas que usa BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

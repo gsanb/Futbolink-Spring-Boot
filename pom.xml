@@ -105,7 +105,18 @@
             <version>3.3.4</version>
         </dependency>
 
-  
+  <!-- WebSocket support -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-websocket</artifactId>
+</dependency>
+
+<!-- Para STOMP messaging (ya incluido en WebSocket starter, pero por claridad) -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-messaging</artifactId>
+</dependency>
+
 
 
 

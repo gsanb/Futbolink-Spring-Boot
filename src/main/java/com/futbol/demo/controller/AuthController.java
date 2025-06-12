@@ -4,6 +4,8 @@ package com.futbol.demo.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.futbol.demo.dto.TokenResponse;
 import com.futbol.demo.service.AuthService;
 
 @RestController
@@ -12,7 +14,9 @@ import com.futbol.demo.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
-
+    
+    //Controller de login y registro
+    
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));

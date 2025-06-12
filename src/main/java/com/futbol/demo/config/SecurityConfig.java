@@ -46,11 +46,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req ->
                 req
-                .requestMatchers("/auth/**", "/logos/**").permitAll()
+                .requestMatchers("/auth/**", "/logos/**", "/avatars/**").permitAll()           
+                .requestMatchers(HttpMethod.POST, "/api/users/me").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/users/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").authenticated()
                 
                 // Endpoints públicos
                 .requestMatchers(HttpMethod.GET, "/api/teams").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/teams/{id}").permitAll() // Permitir ver detalles sin autenticación
+                
+                // Endpoints de chat
+                .requestMatchers(HttpMethod.GET, "/api/chat/**").hasAnyRole("PLAYER", "TEAM")
+                .requestMatchers(HttpMethod.POST, "/api/chat/**").hasAnyRole("PLAYER", "TEAM")
                 
                 // Endpoints para TEAM
                 .requestMatchers(HttpMethod.GET, "/api/teams/my-teams").hasRole("TEAM")
@@ -58,6 +66,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/teams/**").hasRole("TEAM")
                 .requestMatchers(HttpMethod.DELETE, "/api/teams/**").hasRole("TEAM")
                 
+                .requestMatchers(HttpMethod.GET, "/api/notifications").authenticated() // Solo usuarios autenticados
+                .requestMatchers(HttpMethod.POST, "/api/notifications/mark-as-read").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/applications/status-by-id/**").hasRole("PLAYER")
+
                 // Endpoints para aplicaciones
                 .requestMatchers(HttpMethod.GET, "/api/applications/team").hasRole("TEAM")
                 .requestMatchers(HttpMethod.GET, "/api/player/{id}").hasAnyRole("PLAYER", "TEAM")
@@ -100,7 +112,6 @@ public class SecurityConfig {
     }
     
  // Configuración CORS para Spring Security
- // En SecurityConfig.java
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

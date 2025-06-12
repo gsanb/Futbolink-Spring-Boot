@@ -20,6 +20,7 @@ import com.futbol.demo.model.User;
 import com.futbol.demo.repository.ApplicationRepository;
 import com.futbol.demo.repository.PlayerRepository;
 import com.futbol.demo.repository.TeamRepository;
+import com.futbol.demo.service.NotificationService;
 import com.futbol.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -31,8 +32,10 @@ public class ApplicationController {
     private final ApplicationRepository applicationRepository;
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
-    private final UserService userService; // Tu servicio que devuelve el usuario actual
+    private final UserService userService; 
+    private final NotificationService notificationService;
 
+    //Postular a un equipo
     @PostMapping("/apply/{teamId}")
     public ResponseEntity<?> applyToTeam(@PathVariable Long teamId, @RequestBody String message) {
         User currentUser = userService.getCurrentUser();
@@ -51,9 +54,12 @@ public class ApplicationController {
                 .message(message)
                 .build();
         applicationRepository.save(app);
+        applicationRepository.save(app);
+        notificationService.createTeamApplicationNotification(team, player);
         return ResponseEntity.ok("Aplicación enviada");
     }
-
+    
+    //Obtener las postulaciones totales
     @GetMapping("/team")
     public List<ApplicationDTO> getTeamApplications() {
         User currentUser = userService.getCurrentUser();
@@ -70,6 +76,7 @@ public class ApplicationController {
         return allApps.stream()
             .map(app -> new ApplicationDTO(
                     app.getId(),
+                    app.getPlayer().getId(),
                     app.getPlayer().getUser().getName(),
                     app.getMessage(),
                     app.getStatus(),
@@ -77,7 +84,8 @@ public class ApplicationController {
             ))
             .toList();
     }
-
+    
+    //Obtener jugadores que han postulado
     @GetMapping("/player")
     public List<ApplicationDTO> getPlayerApplications() {
         User currentUser = userService.getCurrentUser();
@@ -89,6 +97,7 @@ public class ApplicationController {
         return apps.stream()
                 .map(app -> new ApplicationDTO(
                         app.getId(),
+                        app.getPlayer().getId(),
                         app.getTeam().getName(), // en este caso, devolvemos el nombre del equipo
                         app.getMessage(),
                         app.getStatus(),
@@ -96,22 +105,26 @@ public class ApplicationController {
                 ))
                 .toList();
     }
-
+    
+    //Aceptar jugador
     @PutMapping("/{id}/accept")
     public ResponseEntity<?> acceptApplication(@PathVariable Long id) {
         Application app = applicationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aplicación no encontrada"));
         app.setStatus(ApplicationStatus.ACCEPTED);
         applicationRepository.save(app);
+        notificationService.createApplicationResponseNotification(app, true);
         return ResponseEntity.ok("Aplicación aceptada");
     }
-
+    
+    //Rechazar al jugador
     @PutMapping("/{id}/reject")
     public ResponseEntity<?> rejectApplication(@PathVariable Long id) {
         Application app = applicationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aplicación no encontrada"));
         app.setStatus(ApplicationStatus.REJECTED);
         applicationRepository.save(app);
+        notificationService.createApplicationResponseNotification(app, false);
         return ResponseEntity.ok("Aplicación rechazada");
     }
     
@@ -125,9 +138,24 @@ public class ApplicationController {
                 .orElseThrow(() -> new RuntimeException("No se encontró una postulación a este equipo"));
 
         return ResponseEntity.ok(app.getStatus());
+    }   
+    
+    //Obtener Status de la postulacion
+    @GetMapping("/status-by-id/{applicationId}")
+    public ResponseEntity<?> getApplicationStatusById(@PathVariable Long applicationId) {
+        User currentUser = userService.getCurrentUser();
+
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Aplicación no encontrada"));
+
+        // Validación de permisos (el jugador debe ser el dueño de la aplicación)
+        if (!app.getPlayer().getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(403).body("No tienes permiso para ver esta aplicación");
+        }
+
+        return ResponseEntity.ok(app.getStatus());
     }
-    
-    
+
 
 }
 

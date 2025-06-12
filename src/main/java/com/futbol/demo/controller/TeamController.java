@@ -55,7 +55,7 @@ public class TeamController {
 	        
 	        return ResponseEntity.ok(teamService.findTeamsByUser(user));
 	    }
-
+	    //Crear equipo
 	 @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	 public ResponseEntity<?> createTeam(
 	     @RequestParam("name") String name,
@@ -96,7 +96,8 @@ public class TeamController {
 	     Team savedTeam = teamService.saveTeam(team);
 	     return ResponseEntity.status(201).body(savedTeam);
 	 }
-
+	 
+	 //Obtener por iD
 	 @GetMapping("/{id}")
 	 public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
 	     Team team = teamService.getTeamById(id)
@@ -104,7 +105,7 @@ public class TeamController {
 	     return ResponseEntity.ok(team);
 	 }
 	 
-
+	 	//Para editar el equipo
 	    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	    @PreAuthorize("hasRole('TEAM')")
 	    public ResponseEntity<Team> updateTeam(
@@ -136,7 +137,8 @@ public class TeamController {
 	        Team updatedTeam = teamService.saveTeam(existingTeam);
 	        return ResponseEntity.ok(updatedTeam);
 	    }
-
+	    
+	    //Eliminar equipo
 	    @DeleteMapping("/{id}")
 	    @PreAuthorize("hasRole('TEAM')")
 	    public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
@@ -173,7 +175,7 @@ public class TeamController {
 	        if (filePath == null) return;
 	        
 	        try {
-	            Path path = Paths.get(filePath.substring(1)); // Elimina la '/' inicial
+	            Path path = Paths.get(filePath.substring(1)); // Elimina la / inicial
 	            Files.deleteIfExists(path);
 	        } catch (IOException e) {
 	            System.err.println("Error al eliminar el archivo: " + filePath);

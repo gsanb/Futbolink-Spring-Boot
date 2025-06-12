@@ -11,7 +11,7 @@ import java.util.List;
 
 import com.futbol.demo.controller.AuthRequest;
 import com.futbol.demo.controller.RegisterRequest;
-import com.futbol.demo.controller.TokenResponse;
+import com.futbol.demo.dto.TokenResponse;
 import com.futbol.demo.model.Token;
 import com.futbol.demo.model.User;
 import com.futbol.demo.repository.TokenRepository;
@@ -27,6 +27,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    
+    //Registra un nuevo usuario, genera sus tokens y lso almacena
     public TokenResponse register(final RegisterRequest request) {
         final User user = User.builder()
                 .name(request.name())
@@ -42,7 +44,8 @@ public class AuthService {
         saveUserToken(savedUser, jwtToken);
         return new TokenResponse(jwtToken, refreshToken);
     }
-
+    
+    // Autentica al usuario con sus credenciales, genera nuevos tokens, revoca los antiguos y devuelve los nuevos
     public TokenResponse authenticate(final AuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -58,7 +61,7 @@ public class AuthService {
         saveUserToken(user, accessToken);
         return new TokenResponse(accessToken, refreshToken);
     }
-
+    //Guarda un nuevo token válido para el usuario en la base de datos
     private void saveUserToken(User user, String jwtToken) {
         final Token token = Token.builder()
                 .user(user)
@@ -69,7 +72,8 @@ public class AuthService {
                 .build();
         tokenRepository.save(token);
     }
-
+    
+    // Marca como expirados e inválidos) todos los tokens válidos previos del usuario
     private void revokeAllUserTokens(final User user) {
         final List<Token> validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
         if (!validUserTokens.isEmpty()) {
@@ -80,7 +84,8 @@ public class AuthService {
             tokenRepository.saveAll(validUserTokens);
         }
     }
-
+    
+    // Refresca el token de acceso a partir de un token de actualización válido y revoca los tokens anteriores
     public TokenResponse refreshToken(@NotNull final String authentication) {
         if (authentication == null || !authentication.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid auth header");

@@ -9,6 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ApplicationDTO {
     private Long id;
+    private Long playerId;
     private String playerUsername;
     private String message;
     private ApplicationStatus status;
