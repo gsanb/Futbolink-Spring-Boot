@@ -1,10 +1,10 @@
 package com.futbol.demo.service;
 
 import com.futbol.demo.model.*;
+
 import com.futbol.demo.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,7 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
-    private final SimpMessagingTemplate messagingTemplate; 
     
 	 //Crea una notificación para un jugador indicando si su solicitud para un equipo fue aceptada o rechazada,
 	 //la guarda en la base de datos y la envía en tiempo real por WebSocket (he terminado usando un sistema de polling, a futuro me gustaria implementarlo en tiempo real con webSocket 100% funcional).
@@ -27,11 +26,6 @@ public class NotificationService {
                 .relatedEntityId(application.getId())
                 .build();
         notificationRepository.save(notification);
-
-        messagingTemplate.convertAndSend(
-            "/topic/notifications/" + application.getPlayer().getUser().getId(), 
-            notification
-        );
     }
     
 	 //Crea una notificación para el dueño del equipo cuando un jugador aplica a su equipo,
@@ -47,13 +41,6 @@ public class NotificationService {
                 .build();
         
         notificationRepository.save(notification);
-
-        // Envía al destinatario específico
-        messagingTemplate.convertAndSendToUser(
-            team.getUser().getEmail(), // O username según tu auth
-            "/queue/notifications",
-            notification
-        );
     }
     
     //Guarda una notificación personalizada en la base de datos.

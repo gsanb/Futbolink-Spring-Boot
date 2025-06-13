@@ -25,12 +25,6 @@ spring:
       hibernate:
         format_sql: true
 
-# Descomentar si usas caché con Caffeine
-#  cache:
-#    type: caffeine
-#    cache-names: naufragos, habilidades
-#    caffeine:
-#      spec: expireAfterWrite=25m,maximumSize=100
 
 application:
   security:

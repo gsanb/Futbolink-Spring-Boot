@@ -1,6 +1,7 @@
 package com.futbol.demo.service;
 
 import java.time.LocalDateTime;
+
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,7 +23,6 @@ public class ChatService {
     private final PlayerRepository playerRepo;
     private final TeamRepository teamRepo;
     private final NotificationService notificationService;
-    private final SimpMessagingTemplate messagingTemplate; 
     
 	  //Retorna la lista de mensajes asociados a una aplicación, ordenados por fecha ascendente,
 	  //solo si el usuario actual tiene permiso para acceder.
@@ -77,14 +77,6 @@ public class ChatService {
                 .build();
 
         notificationService.saveNotification(notification);
-
-        // Enviar por WebSocket (opcional)
-        messagingTemplate.convertAndSendToUser(
-                recipientUser.getEmail(),
-                "/queue/notifications",
-                notification
-        );
-
         return savedMessage;
     }
     
