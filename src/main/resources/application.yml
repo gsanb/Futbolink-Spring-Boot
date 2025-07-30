@@ -8,12 +8,12 @@ spring:
 
   web:
     resources:
-      static-locations: classpath:/static/,file:logos/,file:avatars/						
+      static-locations: classpath:/static/,file:logos/,file:avatars/
 
   datasource:
-    url: jdbc:mysql://localhost:3306/football?useSSL=false&serverTimezone=UTC
-    username: root
-    password: 660522xD.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -24,7 +24,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
 
 application:
   security:
