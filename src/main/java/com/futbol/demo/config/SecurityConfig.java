@@ -46,11 +46,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(req ->
                 req
+                .requestMatchers("/", "/index.html", "/assets/**", "/vite.svg", "/favicon.ico").permitAll()
                 .requestMatchers("/auth/**", "/logos/**", "/avatars/**").permitAll()           
                 .requestMatchers(HttpMethod.POST, "/api/users/me").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/users/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/users/**").authenticated()
+                
                 
                 // Endpoints públicos
                 .requestMatchers(HttpMethod.GET, "/api/teams").permitAll()
